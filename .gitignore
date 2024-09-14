@@ -20,3 +20,6 @@ Pipfile.lock
 blink.json
 blinktest.py
 .vscode/*
+
+*desktop.ini
+*folderhighlight-*.ico

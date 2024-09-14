@@ -34,6 +34,8 @@ from blinkpy.helpers.constants import (
 from blinkpy.helpers.constants import __version__
 from blinkpy.auth import Auth, TokenRefreshFailed, LoginError
 
+from colorama import Fore, Back, Style #3j
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -357,6 +359,7 @@ class Blink:
 
         results = await self.get_videos_metadata(since=since, stop=stop)
         await self._parse_downloaded_items(results, camera, path, delay, debug)
+        ###_LOGGER.info(Fore.RESET)
 
     async def get_videos_metadata(self, since=None, camera="all", stop=10):
         """
@@ -379,15 +382,17 @@ class Blink:
 
         for page in range(1, stop):
             response = await api.request_videos(self, time=since_epochs, page=page)
-            _LOGGER.debug("Processing page %s", page)
+            _LOGGER.debug(Fore.MAGENTA + "Processing page %s", page)
             try:
                 result = response["media"]
                 if not result:
                     raise KeyError
                 videos.extend(result)
             except (KeyError, TypeError):
-                _LOGGER.info("No videos found on page %s. Exiting.", page)
+                _LOGGER.info(Fore.RED + "No videos found on page %s. Exiting.", page)
                 break
+        # _LOGGER.debug(Fore.RESET)
+        # _LOGGER.info(Fore.RESET)
         return videos
 
     async def do_http_get(self, address):
@@ -408,21 +413,23 @@ class Blink:
     async def _parse_downloaded_items(self, result, camera, path, delay, debug):
         """Parse downloaded videos."""
         for item in result:
+           
+            
             try:
                 created_at = item["created_at"]
                 camera_name = item["device_name"]
                 is_deleted = item["deleted"]
                 address = item["media"]
             except KeyError:
-                _LOGGER.info("Missing clip information, skipping...")
+                _LOGGER.info(Fore.RED + "Missing clip information, skipping...")
                 continue
 
             if camera_name not in camera and "all" not in camera:
-                _LOGGER.debug("Skipping videos for %s.", camera_name)
+                _LOGGER.debug(Fore.YELLOW + "Skipping videos for %s.", camera_name)
                 continue
 
             if is_deleted:
-                _LOGGER.debug("%s: %s is marked as deleted.", camera_name, address)
+                _LOGGER.debug(Fore.CYAN + "%s: %s is marked as deleted", camera_name, address)
                 continue
 
             filename = f"{camera_name}-{created_at}"
@@ -431,14 +438,14 @@ class Blink:
 
             if not debug:
                 if await aiofiles.ospath.isfile(filename):
-                    _LOGGER.info("%s already exists, skipping...", filename)
+                    _LOGGER.info(Fore.YELLOW + "%s already exists, skipping...", filename)
                     continue
 
                 response = await self.do_http_get(address)
                 async with aiofiles.open(filename, "wb") as vidfile:
                     await vidfile.write(await response.read())
 
-                _LOGGER.info("Downloaded video to %s", filename)
+                _LOGGER.info(Fore.GREEN + "Downloaded video to %s\n", filename)
             else:
                 print(
                     f"Camera: {camera_name}, Timestamp: {created_at}, "
@@ -446,7 +453,10 @@ class Blink:
                 )
             if delay > 0:
                 time.sleep(delay)
-
+                
+        ### for result
+        # # _LOGGER.debug(Fore.RESET)
+        # # _LOGGER.info(Fore.RESET)
 
 class BlinkSetupError(Exception):
     """Class to handle setup errors."""

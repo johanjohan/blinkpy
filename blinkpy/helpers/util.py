@@ -24,6 +24,7 @@ async def json_load(file_name):
         async with aiofiles.open(file_name, "r") as json_file:
             test = await json_file.read()
             data = json.loads(test)
+            #print(json.dumps(data, indent=4)) # 3j
         return data
     except FileNotFoundError:
         _LOGGER.error("Could not find %s", file_name)
