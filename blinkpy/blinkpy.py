@@ -36,8 +36,36 @@ from blinkpy.auth import Auth, TokenRefreshFailed, LoginError
 
 from colorama import Fore, Back, Style #3j
 
-_LOGGER = logging.getLogger(__name__)
+# ------------------------------------------------
+# | logger
+# ------------------------------------------------
+class CustomFormatter(logging.Formatter):
+    #https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output
+    level       = Fore.LIGHTBLACK_EX + '%(levelname)7s | '
+    #format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+    format = '%(message)s'
 
+    FORMATS = {
+        logging.DEBUG:      level + Fore.LIGHTBLACK_EX + format + Fore.RESET,
+        logging.INFO:       level + Fore.WHITE + format + Fore.RESET,
+        logging.WARNING:    level + Fore.YELLOW + format + Fore.RESET,
+        logging.ERROR:      level + Fore.RED + format + Fore.RESET,
+        logging.CRITICAL:   level + Style.BRIGHT + Fore.RED + format + Fore.RESET
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+_LOGGER = logging.getLogger(__name__)
+_LOGGER.setLevel(logging.INFO) # change here INFO DEBUG
+
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG) # keep logging.DEBUG
+ch.setFormatter(CustomFormatter())
+_LOGGER.addHandler(ch)
 
 class Blink:
     """Class to initialize communication."""
@@ -381,14 +409,14 @@ class Blink:
 
         for page in range(1, stop):
             response = await api.request_videos(self, time=since_epochs, page=page)
-            _LOGGER.debug(Fore.MAGENTA + "Processing page %s" + Fore.RESET, page)
+            _LOGGER.info("Processing page %s", page)
             try:
                 result = response["media"]
                 if not result:
                     raise KeyError
                 videos.extend(result)
             except (KeyError, TypeError):
-                _LOGGER.info(Fore.YELLOW + "No videos found on page %s. Exiting." + Fore.RESET, page)
+                _LOGGER.warning("No videos found on page %s. Exiting.", page)
                 break
         return videos
 
@@ -418,15 +446,15 @@ class Blink:
                 is_deleted = item["deleted"]
                 address = item["media"]
             except KeyError:
-                _LOGGER.info(Fore.RED + "Missing clip information, skipping..." + Fore.RESET)
+                _LOGGER.error("Missing clip information, skipping...")
                 continue
 
             if camera_name not in camera and "all" not in camera:
-                _LOGGER.debug(Fore.YELLOW + "Skipping videos for %s." + Fore.RESET, camera_name)
+                _LOGGER.warning("Skipping videos for %s.", camera_name)
                 continue
 
             if is_deleted:
-                _LOGGER.debug(Fore.CYAN + "%s: %s is marked as deleted" + Fore.RESET, camera_name, address)
+                _LOGGER.warning("%s: %s is marked as deleted", camera_name, address)
                 continue
 
             filename = f"{camera_name}-{created_at}"
@@ -435,14 +463,14 @@ class Blink:
 
             if not debug:
                 if await aiofiles.ospath.isfile(filename):
-                    _LOGGER.info(Fore.YELLOW + "%s already exists, skipping..." + Fore.RESET, filename)
+                    _LOGGER.warning("%s already exists, skipping...", filename)
                     continue
 
                 response = await self.do_http_get(address)
                 async with aiofiles.open(filename, "wb") as vidfile:
                     await vidfile.write(await response.read())
 
-                _LOGGER.info(Fore.GREEN + "Downloaded video to %s\n" + Fore.RESET, filename)
+                _LOGGER.info(Fore.GREEN + "Downloaded video to %s\n", filename)
             else:
                 print(
                     f"Camera: {camera_name}, Timestamp: {created_at}, "
