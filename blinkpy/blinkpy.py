@@ -389,7 +389,7 @@ class Blink:
                     raise KeyError
                 videos.extend(result)
             except (KeyError, TypeError):
-                _LOGGER.info(Fore.RED + "No videos found on page %s. Exiting.", page)
+                _LOGGER.info(Fore.YELLOW + "No videos found on page %s. Exiting.", page)
                 break
         # _LOGGER.debug(Fore.RESET)
         # _LOGGER.info(Fore.RESET)
