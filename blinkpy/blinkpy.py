@@ -37,7 +37,7 @@ from blinkpy.auth import Auth, TokenRefreshFailed, LoginError
 from colorama import Fore, Back, Style #3j
 
 # ------------------------------------------------
-# | logger
+# | logger 3j
 # ------------------------------------------------
 class CustomFormatter(logging.Formatter):
     #https://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output
