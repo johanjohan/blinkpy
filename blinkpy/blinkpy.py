@@ -67,6 +67,10 @@ ch.setLevel(logging.DEBUG) # keep logging.DEBUG
 ch.setFormatter(CustomFormatter())
 _LOGGER.addHandler(ch)
 
+# ------------------------------------------------
+# | end 3j
+# ------------------------------------------------
+
 class Blink:
     """Class to initialize communication."""
 
